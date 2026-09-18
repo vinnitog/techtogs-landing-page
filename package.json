@@ -1,0 +1,8 @@
+{
+  "name": "techtogs-landing-page",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node server.js", "dev": "node server.js", "build": "node scripts/build.mjs", "check": "node --check server.js && node --check app.js && node --check scripts/build.mjs" },
+  "engines": { "node": ">=20" }
+}
