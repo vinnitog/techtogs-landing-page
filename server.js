@@ -20,7 +20,9 @@ const STATIC_FILES = new Map([
   ['/assets/symbol.svg', ['assets/symbol.svg', 'image/svg+xml']],
   ['/assets/logo.svg', ['assets/logo.svg', 'image/svg+xml']],
   ['/assets/logo-mono.svg', ['assets/logo-mono.svg', 'image/svg+xml']],
-  ['/assets/techtogs-logo.jpeg', ['assets/techtogs-logo.jpeg', 'image/jpeg']]
+  ['/assets/techtogs-logo.jpeg', ['assets/techtogs-logo.jpeg', 'image/jpeg']],
+  ['/assets/brand-horizontal.svg', ['assets/brand-horizontal.svg', 'image/svg+xml']],
+  ['/assets/brand-symbol.svg', ['assets/brand-symbol.svg', 'image/svg+xml']]
 ]);
 const submissions = new Map();
 const RATE_WINDOW = 15 * 60 * 1000;

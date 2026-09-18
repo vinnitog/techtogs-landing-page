@@ -193,11 +193,12 @@ img {
   display: inline-block;
   flex-shrink: 0;
 }
+/* Keep the original artwork; compose its symbol and lettering for a horizontal slot. */
 .brand img {
-  height: 68px;
-  width: 128px;
-  object-fit: cover;
-  object-position: center;
+  height: 38px;
+  width: 200px;
+  object-fit: contain;
+  mix-blend-mode: screen;
 }
 .site-header nav {
   display: flex;
@@ -1022,8 +1023,8 @@ img {
 }
 .mini-integrations img {
   height: auto;
-  aspect-ratio: 1;
   object-fit: contain;
+  mix-blend-mode: screen;
 }
 .mini-integrations small {
   grid-column: 1/-1;
@@ -1132,6 +1133,8 @@ img {
   gap: 8px;
 }
 .demo-top img {
+  object-fit: contain;
+  mix-blend-mode: screen;
   width: 20px;
   height: 20px;
   border-radius: 4px;
@@ -1655,7 +1658,7 @@ select:invalid {
   gap: 32px;
 }
 .footer-main .brand img {
-  height: 68px;
+  height: 38px;
 }
 .footer-main p {
   font-size: 13px;
@@ -1948,7 +1951,7 @@ input,textarea {
   html { scroll-padding-top: 92px; }
   .container { width: calc(100% - 40px); }
   .header-inner { height: 72px; }
-  .brand img { width: 120px; height: 64px; }
+  .brand img { width: 180px; height: 34px; }
   .menu-toggle { display: flex !important; flex-direction: column; justify-content: center; gap: 6px; width: 44px; height: 44px; padding: 11px; border: 1px solid var(--control-border); border-radius: 6px; background: none; }
   .menu-toggle span { width: 20px; height: 1px; background: var(--light); transition: transform .2s; }
   .menu-toggle[aria-expanded=true] span:first-child { transform: translateY(3.5px) rotate(45deg); }

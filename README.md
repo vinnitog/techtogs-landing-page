@@ -42,4 +42,4 @@ Os exemplos do portfólio e seus números são fictícios e estão identificados
 
 Google Analytics, Search Console, CRM e pixels dependem de contas e identificadores ainda não fornecidos. Nenhum rastreador ou cookie de publicidade está ativo; ao adicioná-los, implemente o consentimento apropriado e atualize a política. As fontes usam Google Fonts com fallback local.
 
-Arquivo de marca em uso: `assets/techtogs-logo.jpeg`, usado no cabeçalho, rodapé, demonstrações e favicon.
+Marca: `assets/brand-horizontal.svg` compõe símbolo e lettering originais lado a lado para cabeçalho e rodapé; `assets/brand-symbol.svg` enquadra apenas o símbolo para demonstrações e favicon. Ambos incorporam a imagem original, sem redesenhar a identidade. O CSS integra o fundo preto à superfície escura. Original preservado em `assets/techtogs-logo.jpeg`.
