@@ -38,8 +38,8 @@ Configure o destino de contato e complete a política de privacidade com os dado
 
 Hospede com HTTPS e Node.js ativo. O armazenamento local serve para a prévia; o endpoint do webhook é a opção de entrega para produção. O limitador por IP é simples e fica em memória: ajuste para a infraestrutura real se houver proxy ou múltiplas instâncias.
 
-Os exemplos do portfólio e seus números são fictícios e estão identificados na interface. Substitua por projetos reais autorizados quando disponíveis. A marca em SVG é uma proposta tipográfica original, pois o PDF não forneceu arquivo de logotipo.
+Os exemplos do portfólio e seus números são fictícios e estão identificados na interface. Substitua por projetos reais autorizados quando disponíveis. A marca utiliza a imagem oficial fornecida pelo usuário.
 
 Google Analytics, Search Console, CRM e pixels dependem de contas e identificadores ainda não fornecidos. Nenhum rastreador ou cookie de publicidade está ativo; ao adicioná-los, implemente o consentimento apropriado e atualize a política. As fontes usam Google Fonts com fallback local.
 
-Arquivos de marca: `assets/logo.svg` (horizontal, fundo transparente), `assets/logo-mono.svg` (monocromática clara), `assets/symbol.svg` (símbolo e favicon).
+Arquivo de marca em uso: `assets/techtogs-logo.jpeg`, usado no cabeçalho, rodapé, demonstrações e favicon.
