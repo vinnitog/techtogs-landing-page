@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <title>TechTogs</title>
+  <rect width="64" height="64" rx="12" fill="#0b1516"/>
+  <!-- Optical adaptation of the supplied emblem for small browser tabs. -->
+  <path fill="#f7faf8" d="M4 15h19l7 5v8l-8-6H11ZM13 25h10l5 4v21l-7-6V31h-3Z"/>
+  <path fill="#f7faf8" d="m34 20 8-5h18L49 28h-6v16l-9 7V30l8-6-8 5Z"/>
+  <path fill="#0b1516" d="m33 28 9-7h7l5-5 3 3-7 7h-7l-10 8Z"/>
+  <path fill="none" stroke="#8cff00" stroke-width="3" stroke-linejoin="round" d="m35 31 8-7h7l5-5"/>
+  <circle cx="56" cy="18" r="3.5" fill="#0b1516" stroke="#8cff00" stroke-width="2.5"/>
+</svg>

@@ -7,7 +7,7 @@ const output = path.join(root, 'dist');
 await mkdir(path.join(output, 'assets'), { recursive: true });
 
 // Only the public site assets belong in the Pages artifact.
-for (const file of ['styles.css', 'app.js', 'politica-de-privacidade.html', 'assets/brand-horizontal.svg', 'assets/brand-symbol.svg']) {
+for (const file of ['styles.css', 'app.js', 'politica-de-privacidade.html', 'assets/brand-horizontal.svg', 'assets/brand-symbol.svg', 'assets/favicon.svg']) {
   await copyFile(path.join(root, file), path.join(output, file));
 }
 

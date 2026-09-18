@@ -555,6 +555,9 @@ img {
   white-space: nowrap;
   min-height: 44px;
 }
+.workflow-footer button:not(:disabled) {
+  cursor: pointer;
+}
 .workflow-footer button:hover {
   border-color: var(--lime);
 }
