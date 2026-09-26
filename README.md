@@ -1,45 +1,45 @@
 # TechTogs
 
-Landing page baseada no briefing TechTogs.pdf. HTML, CSS e JavaScript, com servidor Node.js sem dependências. Identidade grafite e verde-limão, versão responsiva, fluxo demonstrativo, projetos ilustrativos, formulário e página de privacidade.
+Site oficial: https://techtogs.com.br — atendimento: support@techtogs.com.br.
+Landing page em HTML/CSS/JavaScript e Node.js, sem dependências de produção.
 
-## Rodar
+## Desenvolvimento
 
-Demonstração: https://vinnitog.github.io/techtogs-landing-page/
+Node.js 20+; execute `npm start`. Prévia: http://localhost:3000.
+Verificações: `npm run check`, `npm test` e `npm run build`.
 
-O GitHub Pages publica automaticamente a cada push na branch `main`, pelo workflow `.github/workflows/pages.yml`. O comando `npm run build` prepara apenas os arquivos públicos em `dist/`. No Pages, o formulário permite simular o preenchimento, mas não envia nem armazena dados. O backend continua disponível na execução local.
+## Hospedagem
 
-Requer Node.js 20 ou superior. Não precisa instalar pacotes.
+O Railway executa `npm start`, com `/health` como verificação de disponibilidade. O repositório no GitHub continua sendo a fonte do código. O domínio oficial aponta para o serviço Railway pelo DNS.
 
-```powershell
-npm start
-```
+O workflow do GitHub Pages publica uma demonstração estática sem envio de formulário. Essa versão tem `noindex` e URL canônica apontando para o site oficial.
 
-Abra http://localhost:3000. `npm run check` verifica a sintaxe do JavaScript. Abrir apenas o HTML exibe o site, mas o formulário depende do servidor.
+## E-mail e formulário
 
-## Contatos e formulário
+Resend envia como `TechTogs <support@techtogs.com.br>`. Cloudflare Email Routing encaminha o recebimento de support para o Gmail definido pelo proprietário. O Gmail pode usar SMTP do Resend para responder como support; essa configuração é feita na conta do usuário.
 
-WhatsApp e e-mail não foram definidos. Os links só aparecem quando configurados. No modo padrão, o formulário informa que é uma prévia e salva solicitações em `data/leads.jsonl`, sem disparar e-mail ou WhatsApp. A pasta de dados não é servida pela web nem incluída no Git.
+Configure somente no ambiente privado do Railway:
 
-Variáveis de ambiente opcionais, definidas antes de iniciar:
+- `NODE_ENV=production`
+- `HOST=0.0.0.0`
+- `RESEND_API_KEY`: chave restrita ao envio pelo domínio techtogs.com.br.
+- `CONTACT_RECIPIENT`: caixa de atendimento indicada pelo proprietário.
+- `CONTACT_WHATSAPP`: opcional, país e DDD, somente dígitos.
+- `CONTACT_WEBHOOK_URL` e `CONTACT_WEBHOOK_TOKEN`: integração alternativa opcional. Resend tem prioridade quando configurado.
+- `PORT`: fornecida pelo Railway.
 
-- `CONTACT_EMAIL`: e-mail público da TechTogs.
-- `CONTACT_WHATSAPP`: número com país e DDD, somente dígitos.
-- `CONTACT_WEBHOOK_URL`: URL de uma integração que receba POST JSON, para CRM ou envio de e-mail. Quando definida, o formulário envia para essa integração e só confirma o recebimento depois de resposta HTTP de sucesso.
-- `CONTACT_WEBHOOK_TOKEN`: token Bearer opcional, usado apenas pelo servidor.
-- `DATA_DIR`: diretório de gravação local das solicitações na prévia.
-- `PORT`: porta; padrão 3000.
-- `HOST`: interface de rede; padrão `127.0.0.1`. Para hospedagem, configure conforme o provedor.
+Em produção, o formulário só confirma sucesso após aceitação pelo provedor. Sem integração, retorna indisponibilidade; não grava contatos no disco efêmero. Em desenvolvimento sem integração, salva a prévia em `data/leads.jsonl`, ignorada pelo Git.
 
-O JSON enviado inclui `id`, `createdAt`, `name`, `company`, `contact`, `challenge`, `message`, `consent` e `privacyVersion`. A integração deve tratar o ID como identificador único para evitar processamento repetido.
+O remetente e o destinatário são controlados pelo servidor. O e-mail informado pelo visitante é usado apenas como Reply-To. A proteção contra repetição fica em memória e é adequada a uma única instância; reavaliar para múltiplas réplicas. Atrás do Railway, usa o último endereço válido de X-Forwarded-For informado pelo proxy.
 
-## Antes de publicar
+Não publique chaves em HTML, JavaScript do navegador, commits ou arquivos estáticos. As rotas públicas do servidor usam uma lista explícita de arquivos.
 
-Configure o destino de contato e complete a política de privacidade com os dados reais da empresa, o canal de privacidade, os fornecedores e o prazo de retenção. A política atual identifica explicitamente o ambiente de demonstração.
+## DNS
 
-Hospede com HTTPS e Node.js ativo. O armazenamento local serve para a prévia; o endpoint do webhook é a opção de entrega para produção. O limitador por IP é simples e fica em memória: ajuste para a infraestrutura real se houver proxy ou múltiplas instâncias.
+Os valores de DKIM/CNAME vêm do painel do domínio no Resend. Os registros MX de recebimento vêm do Cloudflare Email Routing. Não habilitar o MX de recebimento do Resend simultaneamente: ele competiria com o encaminhamento ao Gmail. Usar o alvo e o TXT de verificação fornecidos pelo Railway para o domínio web.
 
-Os exemplos do portfólio e seus números são fictícios e estão identificados na interface. Substitua por projetos reais autorizados quando disponíveis. A marca utiliza a imagem oficial fornecida pelo usuário.
+## Conteúdo e marca
 
-Google Analytics, Search Console, CRM e pixels dependem de contas e identificadores ainda não fornecidos. Nenhum rastreador ou cookie de publicidade está ativo; ao adicioná-los, implemente o consentimento apropriado e atualize a política. As fontes usam Google Fonts com fallback local.
+Os projetos e seus números são exemplos fictícios identificados na interface. WhatsApp não foi definido. Não há analytics nem cookies de publicidade. As fontes usam Google Fonts.
 
-Marca: `assets/brand-horizontal.svg` compõe símbolo e lettering originais lado a lado para cabeçalho e rodapé; `assets/brand-symbol.svg` enquadra apenas o símbolo para demonstrações. Ambos incorporam a imagem original, sem redesenhar a identidade. O CSS integra o fundo preto à superfície escura. Original preservado em `assets/techtogs-logo.jpeg`. `assets/favicon.svg` é uma adaptação vetorial do emblema, com formas simplificadas e alto contraste para abas do navegador.
+`assets/brand-horizontal.svg` compõe símbolo e lettering originais; `assets/brand-symbol.svg` enquadra o símbolo. Ambos incorporam a imagem oficial preservada em `assets/techtogs-logo.jpeg`. `assets/favicon.svg` adapta o emblema para pequenos tamanhos.

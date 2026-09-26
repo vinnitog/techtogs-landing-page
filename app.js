@@ -175,6 +175,10 @@ if (!isStaticDemo) fetch('/api/config').then(response => response.json()).then(c
   if (config.demo) {
     form.querySelector('.form-footnote').textContent = 'Prévia: solicitações registradas apenas neste ambiente.';
   }
+  if (config.contactAvailable === false) {
+    form.querySelector('[type=submit]').disabled = true;
+    form.querySelector('.form-footnote').textContent = 'Formulário temporariamente indisponível. Fale conosco pelo e-mail ao lado.';
+  }
   const contacts = document.querySelector('.configured-contacts');
   if (config.whatsapp && /^\d{10,15}$/.test(config.whatsapp)) {
     const link = document.createElement('a');
@@ -184,7 +188,7 @@ if (!isStaticDemo) fetch('/api/config').then(response => response.json()).then(c
     link.rel = 'noopener noreferrer';
     contacts.append(link);
   }
-  if (config.email && emailPattern.test(config.email)) {
+  if (config.email && emailPattern.test(config.email) && !contacts.querySelector('a[href^="mailto:"]')) {
     const link = document.createElement('a');
     link.href = `mailto:${config.email}`;
     link.textContent = config.email;

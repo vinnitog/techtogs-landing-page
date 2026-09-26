@@ -3,12 +3,18 @@ import { readFile, mkdir, appendFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
+import { isIP } from 'node:net';
+import { sendContactEmail } from './contact-email.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
-const HOST = process.env.HOST || '127.0.0.1';
+const HOST = process.env.HOST || (process.env.RAILWAY_ENVIRONMENT_ID ? '0.0.0.0' : '127.0.0.1');
 const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, 'data');
 const WEBHOOK_URL = process.env.CONTACT_WEBHOOK_URL || '';
+const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+const CONTACT_RECIPIENT = process.env.CONTACT_RECIPIENT || '';
+const EMAIL_READY = Boolean(RESEND_API_KEY && CONTACT_RECIPIENT);
+const PRODUCTION = process.env.NODE_ENV === 'production';
 const CHALLENGES = new Set(['Atendimento pelo WhatsApp', 'Tarefas manuais', 'Organização de clientes ou pedidos', 'Integração entre ferramentas', 'Sistema interno', 'Automação com inteligência artificial', 'Ainda não sei exatamente']);
 const STATIC_FILES = new Map([
   ['/', ['index.html', 'text/html']],
@@ -23,7 +29,9 @@ const STATIC_FILES = new Map([
   ['/assets/techtogs-logo.jpeg', ['assets/techtogs-logo.jpeg', 'image/jpeg']],
   ['/assets/brand-horizontal.svg', ['assets/brand-horizontal.svg', 'image/svg+xml']],
   ['/assets/brand-symbol.svg', ['assets/brand-symbol.svg', 'image/svg+xml']],
-  ['/assets/favicon.svg', ['assets/favicon.svg', 'image/svg+xml']]
+  ['/assets/favicon.svg', ['assets/favicon.svg', 'image/svg+xml']],
+  ['/robots.txt', ['robots.txt', 'text/plain']],
+  ['/sitemap.xml', ['sitemap.xml', 'application/xml']]
 ]);
 const submissions = new Map();
 const RATE_WINDOW = 15 * 60 * 1000;
@@ -44,7 +52,8 @@ async function receiveContact(request, response) {
   if (!request.headers['content-type']?.startsWith('application/json')) {
     return sendJson(response, 415, { message: 'Formato de envio inválido.' });
   }
-  const client = request.socket.remoteAddress;
+  const forwarded = request.headers['x-forwarded-for']?.split(',').at(-1)?.trim();
+  const client = process.env.RAILWAY_ENVIRONMENT_ID && isIP(forwarded || '') ? forwarded : request.socket.remoteAddress;
   const rate = submissions.get(client);
   if (rate && Date.now() - rate.start < RATE_WINDOW && rate.count >= 8) {
     response.setHeader('Retry-After', '900');
@@ -69,10 +78,12 @@ async function receiveContact(request, response) {
     if (data.name.length < 2 || data.name.length > 120 || data.company.length > 160 || !validContact || data.contact.length > 180 || !CHALLENGES.has(data.challenge) || data.message.length < 10 || data.message.length > 5000 || input.consent !== true) {
       return sendJson(response, 400, { message: 'Verifique seu nome, contato, desafio e mensagem, e confirme o consentimento.' });
     }
-    const lead = { id: randomUUID(), createdAt: new Date().toISOString(), ...data, consent: true, privacyVersion: '2026-09-18' };
+    const lead = { id: randomUUID(), createdAt: new Date().toISOString(), ...data, consent: true, privacyVersion: '2026-09-26' };
     if (rate && Date.now() - rate.start < RATE_WINDOW) rate.count++;
     else submissions.set(client, { start: Date.now(), count: 1 });
-    if (WEBHOOK_URL) {
+    if (EMAIL_READY) {
+      await sendContactEmail(lead, { apiKey: RESEND_API_KEY, recipient: CONTACT_RECIPIENT });
+    } else if (WEBHOOK_URL) {
       const result = await fetch(WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...(process.env.CONTACT_WEBHOOK_TOKEN ? { Authorization: `Bearer ${process.env.CONTACT_WEBHOOK_TOKEN}` } : {}) },
@@ -80,12 +91,14 @@ async function receiveContact(request, response) {
         signal: AbortSignal.timeout(10000)
       });
       if (!result.ok) throw new Error('delivery');
+    } else if (PRODUCTION) {
+      return sendJson(response, 503, { message: 'O formulário está temporariamente indisponível. Escreva para support@techtogs.com.br.' });
     } else {
       await mkdir(DATA_DIR, { recursive: true });
       await appendFile(path.join(DATA_DIR, 'leads.jsonl'), `${JSON.stringify(lead)}\n`, 'utf8');
     }
     return sendJson(response, 201, {
-      message: WEBHOOK_URL
+      message: EMAIL_READY || WEBHOOK_URL
         ? 'Recebemos sua mensagem. Em breve, entraremos em contato para entender melhor o seu cenário.'
         : 'Seu desafio foi registrado nesta prévia. O envio para a equipe ainda não está conectado; nenhum e-mail ou WhatsApp foi enviado.',
       id: lead.id
@@ -107,7 +120,8 @@ const server = http.createServer(async (request, response) => {
   catch { return sendJson(response, 400, { message: 'Endereço inválido.' }); }
   if (pathname === '/api/contact' && request.method === 'POST') return receiveContact(request, response);
   if (!['GET', 'HEAD'].includes(request.method)) return sendJson(response, 405, { message: 'Método não permitido.' });
-  if (pathname === '/api/config') return sendJson(response, 200, { email: process.env.CONTACT_EMAIL || '', whatsapp: process.env.CONTACT_WHATSAPP || '', demo: !WEBHOOK_URL });
+  if (pathname === '/health') return sendJson(response, 200, { status: 'ok' });
+  if (pathname === '/api/config') return sendJson(response, 200, { email: 'support@techtogs.com.br', whatsapp: process.env.CONTACT_WHATSAPP || '', demo: !PRODUCTION && !EMAIL_READY && !WEBHOOK_URL, contactAvailable: !PRODUCTION || EMAIL_READY || Boolean(WEBHOOK_URL) });
   const file = STATIC_FILES.get(pathname);
   if (!file) { response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); return response.end('Página não encontrada.'); }
   try {
@@ -121,4 +135,4 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.requestTimeout = 20000;
-server.listen(PORT, HOST, () => console.log(`TechTogs disponível em http://${HOST}:${PORT}`));
+server.listen(PORT, HOST, () => console.log(`TechTogs disponível em http://${HOST}:${server.address().port}`));
