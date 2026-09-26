@@ -118,6 +118,11 @@ const server = http.createServer(async (request, response) => {
   let pathname;
   try { pathname = new URL(request.url, 'http://localhost').pathname; }
   catch { return sendJson(response, 400, { message: 'Endereço inválido.' }); }
+  if (request.headers.host?.split(':')[0].toLowerCase() === 'www.techtogs.com.br') {
+    const target = new URL(request.url, 'https://techtogs.com.br');
+    response.writeHead(308, { Location: `https://techtogs.com.br${target.pathname}${target.search}` });
+    return response.end();
+  }
   if (pathname === '/api/contact' && request.method === 'POST') return receiveContact(request, response);
   if (!['GET', 'HEAD'].includes(request.method)) return sendJson(response, 405, { message: 'Método não permitido.' });
   if (pathname === '/health') return sendJson(response, 200, { status: 'ok' });

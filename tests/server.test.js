@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { get } from 'node:http';
 
 test('production endpoints protect secrets and never silently save an undeliverable contact', async (t) => {
   const child = spawn(process.execPath, ['server.js'], {
@@ -18,6 +19,14 @@ test('production endpoints protect secrets and never silently save an undelivera
     });
   });
   assert.equal((await fetch(`${base}/health`)).status, 200);
+  const redirect = await new Promise((resolve, reject) => {
+    get(`${base}/politica-de-privacidade?from=footer`, { headers: { Host: 'www.techtogs.com.br' } }, (response) => {
+      response.resume();
+      resolve(response);
+    }).on('error', reject);
+  });
+  assert.equal(redirect.statusCode, 308);
+  assert.equal(redirect.headers.location, 'https://techtogs.com.br/politica-de-privacidade?from=footer');
   const config = await (await fetch(`${base}/api/config`)).json();
   assert.equal(config.contactAvailable, false);
   for (const route of ['/server.js', '/contact-email.js', '/.env', '/data/leads.jsonl']) {

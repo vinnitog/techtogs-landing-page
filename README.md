@@ -5,12 +5,12 @@ Landing page em HTML/CSS/JavaScript e Node.js, sem dependências de produção.
 
 ## Desenvolvimento
 
-Node.js 20+; execute `npm start`. Prévia: http://localhost:3000.
+Node.js 24 LTS; execute `npm start`. Prévia: http://localhost:3000.
 Verificações: `npm run check`, `npm test` e `npm run build`.
 
 ## Hospedagem
 
-O Railway executa `npm start`, com `/health` como verificação de disponibilidade. O repositório no GitHub continua sendo a fonte do código. O domínio oficial aponta para o serviço Railway pelo DNS.
+O Railway executa `npm start`, com `/health` como verificação de disponibilidade. Configure esses parâmetros no painel do serviço; novos serviços não aceitam o antigo `railway.json`. O repositório no GitHub continua sendo a fonte do código. O domínio oficial aponta para o serviço Railway pelo DNS.
 
 O workflow do GitHub Pages publica uma demonstração estática sem envio de formulário. Essa versão tem `noindex` e URL canônica apontando para o site oficial.
 
