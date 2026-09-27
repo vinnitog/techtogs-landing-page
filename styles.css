@@ -2047,7 +2047,7 @@ input,textarea {
   .contact-form h3 { font-size: 25px; }
   .form-row { grid-template-columns: 1fr; gap: 0; }
   .form-footnote { font-size: 12px; }
-  .footer-main { padding-bottom: 32px; }
+  .footer-main { padding-bottom: 32px; text-align: center; }
   .footer-bottom { gap: 8px 20px; font-size: 11px; }
   dialog { padding: 40px 24px 28px; }
   dialog h2 { font-size: 28px; }
