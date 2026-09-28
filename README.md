@@ -1,6 +1,6 @@
 # TechTogs
 
-Site oficial: https://techtogs.com.br — atendimento: support@techtogs.com.br.
+Site oficial: https://techtogs.com.br — atendimento: support@techtogs.com.br, WhatsApp +55 14 95978-1077 e Instagram https://www.instagram.com/tech_togs/.
 Landing page em HTML/CSS/JavaScript e Node.js, sem dependências de produção.
 
 ## Desenvolvimento
@@ -24,7 +24,6 @@ Configure somente no ambiente privado do Railway:
 - `HOST=0.0.0.0`
 - `RESEND_API_KEY`: chave restrita ao envio pelo domínio techtogs.com.br.
 - `CONTACT_RECIPIENT`: caixa de atendimento indicada pelo proprietário.
-- `CONTACT_WHATSAPP`: opcional, país e DDD, somente dígitos.
 - `CONTACT_WEBHOOK_URL` e `CONTACT_WEBHOOK_TOKEN`: integração alternativa opcional. Resend tem prioridade quando configurado.
 - `PORT`: fornecida pelo Railway.
 

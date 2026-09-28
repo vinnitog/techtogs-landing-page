@@ -19,6 +19,8 @@ const CHALLENGES = new Set(['Atendimento pelo WhatsApp', 'Tarefas manuais', 'Org
 const STATIC_FILES = new Map([
   ['/', ['index.html', 'text/html']],
   ['/index.html', ['index.html', 'text/html']],
+  ['/sistemas-sob-medida', ['sistemas-sob-medida.html', 'text/html']],
+  ['/sistemas-sob-medida.html', ['sistemas-sob-medida.html', 'text/html']],
   ['/politica-de-privacidade', ['politica-de-privacidade.html', 'text/html']],
   ['/politica-de-privacidade.html', ['politica-de-privacidade.html', 'text/html']],
   ['/styles.css', ['styles.css', 'text/css']],
@@ -126,7 +128,7 @@ const server = http.createServer(async (request, response) => {
   if (pathname === '/api/contact' && request.method === 'POST') return receiveContact(request, response);
   if (!['GET', 'HEAD'].includes(request.method)) return sendJson(response, 405, { message: 'Método não permitido.' });
   if (pathname === '/health') return sendJson(response, 200, { status: 'ok' });
-  if (pathname === '/api/config') return sendJson(response, 200, { email: 'support@techtogs.com.br', whatsapp: process.env.CONTACT_WHATSAPP || '', demo: !PRODUCTION && !EMAIL_READY && !WEBHOOK_URL, contactAvailable: !PRODUCTION || EMAIL_READY || Boolean(WEBHOOK_URL) });
+  if (pathname === '/api/config') return sendJson(response, 200, { email: 'support@techtogs.com.br', whatsapp: '5514959781077', demo: !PRODUCTION && !EMAIL_READY && !WEBHOOK_URL, contactAvailable: !PRODUCTION || EMAIL_READY || Boolean(WEBHOOK_URL) });
   const file = STATIC_FILES.get(pathname);
   if (!file) { response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); return response.end('Página não encontrada.'); }
   try {

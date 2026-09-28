@@ -18,6 +18,9 @@ const html = (await readFile(path.join(root, 'index.html'), 'utf8'))
   .replace('Seus dados são usados para conversar sobre seu projeto.', 'Demonstração: use dados fictícios. Nada será enviado ou salvo.');
 
 await writeFile(path.join(output, 'index.html'), html);
+const servicePage = (await readFile(path.join(root, 'sistemas-sob-medida.html'), 'utf8'))
+  .replace('<head>', '<head>\n  <meta name="robots" content="noindex, follow">');
+await writeFile(path.join(output, 'sistemas-sob-medida.html'), servicePage);
 await writeFile(path.join(output, '.nojekyll'), '');
 await writeFile(path.join(output, 'robots.txt'), 'User-agent: *\nDisallow: /\n');
 console.log('Site estático preparado em dist/ (formulário em modo de demonstração).');

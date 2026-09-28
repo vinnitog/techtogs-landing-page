@@ -177,17 +177,9 @@ if (!isStaticDemo) fetch('/api/config').then(response => response.json()).then(c
   }
   if (config.contactAvailable === false) {
     form.querySelector('[type=submit]').disabled = true;
-    form.querySelector('.form-footnote').textContent = 'Formulário temporariamente indisponível. Fale conosco pelo e-mail ao lado.';
+    form.querySelector('.form-footnote').textContent = 'Formulário temporariamente indisponível. Fale conosco pelos contatos ao lado.';
   }
   const contacts = document.querySelector('.configured-contacts');
-  if (config.whatsapp && /^\d{10,15}$/.test(config.whatsapp)) {
-    const link = document.createElement('a');
-    link.href = `https://wa.me/${config.whatsapp}?text=${encodeURIComponent('Olá! Quero conversar sobre um desafio do meu negócio.')}`;
-    link.textContent = 'Conversar pelo WhatsApp ↗';
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    contacts.append(link);
-  }
   if (config.email && emailPattern.test(config.email) && !contacts.querySelector('a[href^="mailto:"]')) {
     const link = document.createElement('a');
     link.href = `mailto:${config.email}`;
