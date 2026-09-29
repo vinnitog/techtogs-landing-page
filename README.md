@@ -1,12 +1,22 @@
 # TechTogs
 
 Site oficial: https://techtogs.com.br — atendimento: support@techtogs.com.br, WhatsApp +55 14 95978-1077 e Instagram https://www.instagram.com/tech_togs/.
-Landing page em HTML/CSS/JavaScript e Node.js, sem dependências de produção.
+Landing page em HTML/CSS/JavaScript e Node.js. A versão principal combina Motion e GSAP; esbuild prepara os pacotes locais.
 
 ## Desenvolvimento
 
-Node.js 24 LTS; execute `npm start`. Prévia: http://localhost:3000.
+Node.js 24 LTS; execute `npm start`. A landing principal fica em http://localhost:3000.
 Verificações: `npm run check`, `npm test` e `npm run build`.
+
+### Três versões para comparação
+
+Com `npm start`, abra:
+
+- [Motion](http://localhost:3000/motion.html): entrada suave da apresentação e resposta dos nós ao passar o cursor ou testar o fluxo.
+- [GSAP](http://localhost:3000/gsap.html): sequência de entrada da apresentação e progressão das etapas ao chegar à seção “Como trabalhamos”.
+- [Motion + GSAP](http://localhost:3000/motion-gsap.html): sequência narrativa do GSAP e interação do fluxo com Motion.
+
+O usuário escolheu Motion + GSAP como versão principal em `/`. As três páginas de comparação reutilizam o conteúdo e os estilos da base aprovada. O build gera HTML e pacotes JavaScript locais, sem CDN, e inclui a landing principal e as três prévias em `dist/`. As prévias têm `noindex`; com preferência por movimento reduzido, as animações adicionais são desativadas.
 
 ## Hospedagem
 
@@ -38,6 +48,8 @@ Não publique chaves em HTML, JavaScript do navegador, commits ou arquivos está
 Os valores de DKIM/CNAME vêm do painel do domínio no Resend. Os registros MX de recebimento vêm do Cloudflare Email Routing. Não habilitar o MX de recebimento do Resend simultaneamente: ele competiria com o encaminhamento ao Gmail. Usar o alvo e o TXT de verificação fornecidos pelo Railway para o domínio web.
 
 ## Conteúdo e marca
+
+O design system adotado para a identidade visual da TechTogs está em [`docs/identidade-visual/`](docs/identidade-visual/README.md). Consulte as especificações em Markdown, o catálogo HTML e o registro da [identidade aplicada](DESIGN.md) antes de mudar a aparência da landing page. O tema escuro é a apresentação inicial escolhida pelo proprietário.
 
 Os projetos e seus números são exemplos fictícios identificados na interface. WhatsApp não foi definido. Não há analytics nem cookies de publicidade. As fontes usam Google Fonts.
 

@@ -1,25 +1,40 @@
 const menuToggle = document.querySelector('.menu-toggle');
-const nav = document.querySelector('#main-nav');
+const mobileNav = document.querySelector('#mobile-nav');
 const form = document.querySelector('#contact-form');
 const dialog = document.querySelector('#project-dialog');
 const isStaticDemo = document.documentElement.dataset.hosting === 'static';
+let restoreMenuFocus = true;
 
 if (isStaticDemo) form.querySelector('[type=submit]').disabled = false;
 
 function closeMenu() {
-  nav.classList.remove('is-open');
+  if (mobileNav.open) mobileNav.close();
   menuToggle.setAttribute('aria-expanded', 'false');
   menuToggle.setAttribute('aria-label', 'Abrir menu');
 }
 
 menuToggle.addEventListener('click', () => {
-  const isOpen = nav.classList.toggle('is-open');
-  menuToggle.setAttribute('aria-expanded', String(isOpen));
-  menuToggle.setAttribute('aria-label', isOpen ? 'Fechar menu' : 'Abrir menu');
+  restoreMenuFocus = true;
+  mobileNav.showModal();
+  document.body.style.overflow = 'hidden';
+  menuToggle.setAttribute('aria-expanded', 'true');
+  menuToggle.setAttribute('aria-label', 'Fechar menu');
 });
-nav.addEventListener('click', event => { if (event.target.closest('a')) closeMenu(); });
-document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMenu(); });
-document.addEventListener('click', event => { if (!event.target.closest('.site-header')) closeMenu(); });
+mobileNav.querySelector('.mobile-nav-close').addEventListener('click', closeMenu);
+mobileNav.addEventListener('click', event => {
+  if (!event.target.closest('a')) return;
+  restoreMenuFocus = false;
+  closeMenu();
+});
+mobileNav.addEventListener('close', () => {
+  document.body.style.overflow = '';
+  menuToggle.setAttribute('aria-expanded', 'false');
+  menuToggle.setAttribute('aria-label', 'Abrir menu');
+  if (restoreMenuFocus) menuToggle.focus();
+});
+window.matchMedia('(min-width: 1024px)').addEventListener('change', event => {
+  if (event.matches) closeMenu();
+});
 
 const sections = [...document.querySelectorAll('main section[id]')];
 const navLinks = [...document.querySelectorAll('.nav-link')];
@@ -99,6 +114,8 @@ document.querySelector('#dialog-cta').addEventListener('click', event => {
 
 const simulateButton = document.querySelector('#simulate-flow');
 const flowStatus = document.querySelector('#flow-status');
+const flowVisual = document.querySelector('.hero-visual');
+let isSimulating = false;
 const flowSteps = [
   ['.flow-input', 'Nova mensagem recebida.'],
   ['.flow-ai', 'IA identificando a solicitação…'],
@@ -106,30 +123,56 @@ const flowSteps = [
   ['.flow-outputs .output-node:last-child', 'Pronto! Cliente encaminhado.']
 ];
 simulateButton.addEventListener('click', async () => {
-  simulateButton.disabled = true;
-  for (const [selector, message] of flowSteps) {
+  if (isSimulating) return;
+  isSimulating = true;
+  simulateButton.setAttribute('aria-busy', 'true');
+  simulateButton.setAttribute('aria-disabled', 'true');
+  flowVisual.classList.add('is-simulating');
+  try {
+    for (const [selector, message] of flowSteps) {
+      document.querySelectorAll('.is-running').forEach(node => node.classList.remove('is-running'));
+      document.querySelector(selector).classList.add('is-running');
+      flowStatus.textContent = message;
+      window.dispatchEvent(new CustomEvent('techtogs:flow-step', { detail: { selector } }));
+      await new Promise(resolve => setTimeout(resolve, 950));
+    }
+    flowStatus.textContent = 'Demonstração concluída. Tudo conectado.';
+  } finally {
     document.querySelectorAll('.is-running').forEach(node => node.classList.remove('is-running'));
-    document.querySelector(selector).classList.add('is-running');
-    flowStatus.textContent = message;
-    await new Promise(resolve => setTimeout(resolve, 950));
+    flowVisual.classList.remove('is-simulating');
+    simulateButton.removeAttribute('aria-busy');
+    simulateButton.removeAttribute('aria-disabled');
+    isSimulating = false;
   }
-  document.querySelectorAll('.is-running').forEach(node => node.classList.remove('is-running'));
-  flowStatus.textContent = 'Demonstração concluída. Tudo conectado.';
-  simulateButton.disabled = false;
 });
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 function isValidContact(value) {
   return emailPattern.test(value) || (/^[+()\d\s.-]+$/.test(value) && value.replace(/\D/g, '').length >= 10 && value.replace(/\D/g, '').length <= 15);
 }
-form.elements.contact.addEventListener('input', () => form.elements.contact.setCustomValidity(''));
+const contactInput = form.elements.contact;
+const contactError = document.createElement('span');
+contactError.id = 'contact-error';
+contactError.className = 'field-error';
+contactInput.after(contactError);
+contactInput.setAttribute('aria-describedby', contactError.id);
+contactInput.addEventListener('input', () => {
+  contactInput.setCustomValidity('');
+  contactInput.removeAttribute('aria-invalid');
+  contactError.textContent = '';
+});
+let isSubmitting = false;
 form.addEventListener('submit', async event => {
   event.preventDefault();
+  if (isSubmitting) return;
   const data = Object.fromEntries(new FormData(form));
   const status = form.querySelector('.form-status');
   if (!isValidContact(data.contact.trim())) {
-    form.elements.contact.setCustomValidity('Informe um e-mail válido ou WhatsApp com DDD.');
-    form.elements.contact.reportValidity();
+    const message = 'Informe um e-mail válido ou WhatsApp com DDD.';
+    contactInput.setCustomValidity(message);
+    contactInput.setAttribute('aria-invalid', 'true');
+    contactError.textContent = message;
+    contactInput.reportValidity();
     return;
   }
   const submitButton = form.querySelector('[type=submit]');
@@ -139,7 +182,10 @@ form.addEventListener('submit', async event => {
     form.reset();
     return;
   }
-  submitButton.disabled = true;
+  isSubmitting = true;
+  const originalMarkup = submitButton.innerHTML;
+  submitButton.setAttribute('aria-busy', 'true');
+  submitButton.setAttribute('aria-disabled', 'true');
   submitButton.textContent = 'Enviando seu desafio…';
   status.classList.remove('error');
   status.textContent = '';
@@ -162,12 +208,10 @@ form.addEventListener('submit', async event => {
         ? 'Não foi possível conectar ao formulário. Tente novamente em alguns instantes.'
         : error.message;
   } finally {
-    submitButton.disabled = false;
-    submitButton.replaceChildren(document.createTextNode('Enviar meu desafio '));
-    const arrow = document.createElement('span');
-    arrow.textContent = '↗';
-    arrow.setAttribute('aria-hidden', 'true');
-    submitButton.append(arrow);
+    submitButton.innerHTML = originalMarkup;
+    submitButton.removeAttribute('aria-busy');
+    submitButton.removeAttribute('aria-disabled');
+    isSubmitting = false;
   }
 });
 

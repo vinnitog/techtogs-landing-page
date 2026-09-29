@@ -3,4 +3,8 @@ tmp/
 node_modules/
 .env
 dist/
+/motion.html
+/gsap.html
+/motion-gsap.html
+/assets/variants/
 .env.*

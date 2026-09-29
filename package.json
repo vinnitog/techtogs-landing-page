@@ -3,6 +3,21 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "scripts": { "start": "node server.js", "dev": "node server.js", "build": "node scripts/build.mjs", "check": "node --check server.js && node --check app.js && node --check contact-email.js && node --check scripts/build.mjs", "test": "node --test tests/*.test.js" },
-  "engines": { "node": "24.x" }
+  "scripts": {
+    "prestart": "node scripts/build-variants.mjs",
+    "start": "node server.js",
+    "predev": "node scripts/build-variants.mjs",
+    "dev": "node server.js",
+    "build": "node scripts/build.mjs",
+    "check": "node --check server.js && node --check app.js && node --check contact-email.js && node --check scripts/build.mjs && node --check scripts/build-variants.mjs && node --check variants/pages.mjs && node --check variants/motion-interactions.js && node --check variants/gsap-story.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "engines": {
+    "node": "24.x"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "gsap": "^3.15.0",
+    "motion": "^13.4.6"
+  }
 }

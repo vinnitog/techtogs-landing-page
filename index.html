@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b1516">
+  <meta name="theme-color" content="#000000">
   <title>Sistemas sob medida e automações para empresas | TechTogs</title>
   <meta name="description" content="A TechTogs cria sistemas sob medida para organizar processos, clientes e informações. Também desenvolvemos automações com IA e soluções para WhatsApp, com atendimento em todo o Brasil.">
   <meta property="og:title" content="Sistemas sob medida e automações para empresas | TechTogs">
@@ -21,19 +21,25 @@
   <link rel="icon" type="image/svg+xml" sizes="any" href="assets/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="styles.css">
   <script src="app.js" defer></script>
+  <script src="assets/variants/motion-gsap.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="#inicio" aria-label="TechTogs — início"><img src="assets/brand-horizontal.svg" alt="Logo TechTogs, empresa de sistemas e automação digital" width="200" height="38"></a>
-      <button class="menu-toggle" aria-expanded="false" aria-controls="main-nav" aria-label="Abrir menu"><span></span><span></span></button>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav" aria-label="Abrir menu"><span></span><span></span></button>
       <nav id="main-nav" aria-label="Navegação principal">
         <a class="nav-link active" href="#inicio">Início</a><a class="nav-link" href="#solucoes">Soluções</a><a class="nav-link" href="#metodo">Como trabalhamos</a><a class="nav-link" href="#projetos">Projetos</a><a class="nav-link" href="#sobre">Sobre</a><a class="nav-link mobile-contact" href="#contato">Contato</a>
       </nav>
       <a class="button button-small header-cta" href="#contato">Falar sobre meu desafio <svg aria-hidden="true"><use href="#icon-arrow-up-right"/></svg></a>
     </div>
   </header>
+  <dialog id="mobile-nav" class="mobile-nav-dialog" aria-labelledby="mobile-nav-title">
+    <div class="mobile-nav-header"><h2 id="mobile-nav-title">Navegar</h2><button type="button" class="mobile-nav-close" aria-label="Fechar menu">Fechar ×</button></div>
+    <nav aria-label="Navegação móvel"><a class="nav-link active" href="#inicio">Início</a><a class="nav-link" href="#solucoes">Soluções</a><a class="nav-link" href="#metodo">Como trabalhamos</a><a class="nav-link" href="#projetos">Projetos</a><a class="nav-link" href="#sobre">Sobre</a></nav>
+    <a class="button" href="#contato">Falar sobre meu desafio <svg aria-hidden="true"><use href="#icon-arrow-up-right"/></svg></a>
+  </dialog>
   <main id="conteudo">
     <section class="hero" id="inicio">
       <div class="container hero-grid">
