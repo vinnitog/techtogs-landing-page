@@ -199,6 +199,9 @@ img {
 .text-link span {
   font-size: 19px;
 }
+button[data-project],.submit-button {
+  cursor: pointer;
+}
 .skip-link {
   position: fixed;
   z-index: 100;
