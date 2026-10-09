@@ -8,3 +8,9 @@ dist/
 /motion-gsap.html
 /assets/variants/
 .env.*
+
+# techtogs-utilities: conteudo compartilhado gerado pelo bootstrap
+/.agents/skills/
+/.claude/skills/
+/.codex/skills/
+/.claude/agents/
