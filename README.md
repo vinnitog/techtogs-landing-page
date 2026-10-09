@@ -5,7 +5,7 @@ Landing page em HTML/CSS/JavaScript e Node.js. A versão principal combina Motio
 
 ## Desenvolvimento
 
-Node.js 24 LTS; execute `npm start`. A landing principal fica em http://localhost:3000.
+Node.js 24 LTS; execute `npm ci` e depois `npm start`. A landing principal fica em http://localhost:3000.
 Verificações: `npm run check`, `npm test` e `npm run build`.
 
 ### Três versões para comparação
