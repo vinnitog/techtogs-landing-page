@@ -88,6 +88,9 @@ button,a,input,select,textarea {
 button {
   color: inherit;
 }
+button:not(:disabled):not([aria-disabled="true"]) {
+  cursor: pointer;
+}
 button:disabled {
   cursor: wait;
 }
@@ -198,9 +201,6 @@ img {
 }
 .text-link span {
   font-size: 19px;
-}
-button[data-project],.submit-button {
-  cursor: pointer;
 }
 .skip-link {
   position: fixed;
@@ -1798,8 +1798,8 @@ dialog::backdrop {
   font-size: 28px;
   color: var(--tt-text-muted);
   padding: 0;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   display: grid;
   place-items: center;
 }
@@ -1883,7 +1883,7 @@ input,textarea {
   border: 1px dashed var(--tt-border-strong);
   transform: none;
 }
-.button[aria-disabled="true"] { cursor: progress; }
+button[aria-disabled="true"] { cursor: progress; }
 .button svg {
   width: 20px;
   height: 20px;
@@ -2134,6 +2134,7 @@ input,textarea {
   .legal-content h1 { font-size: 2.5rem; }
 }
 @media (max-width: 360px) {
+  .capabilities div { min-width: 0; white-space: normal; }
   .container { width: calc(100% - 32px); }
   .workflow-heading h2 { font-size: 20px; }
   .workflow-board { padding-inline: 12px; }

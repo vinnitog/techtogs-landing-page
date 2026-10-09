@@ -1,11 +1,20 @@
 import './build-variants.mjs';
-import { mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, copyFile, lstat, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { renderVariant, variants } from '../variants/pages.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const output = path.join(root, 'dist');
+if (path.dirname(output) !== path.resolve(root) || path.basename(output) !== 'dist') {
+  throw new Error('Diretório de publicação inválido.');
+}
+try {
+  if ((await lstat(output)).isSymbolicLink()) throw new Error('dist/ não pode ser um link simbólico.');
+  await rm(output, { recursive: true });
+} catch (error) {
+  if (error.code !== 'ENOENT') throw error;
+}
 await mkdir(path.join(output, 'assets'), { recursive: true });
 await mkdir(path.join(output, 'assets', 'variants'), { recursive: true });
 
