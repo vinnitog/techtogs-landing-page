@@ -105,7 +105,7 @@ test('production endpoints protect secrets and never silently save an undelivera
   const config = await (await fetch(`${base}/api/config`)).json();
   assert.equal(config.contactAvailable, false);
   const raw = headers => new Promise((resolve, reject) => {
-    get(base + '/assets/variants/motion-gsap.js', { headers }, response => {
+    get(base + '/app.js', { headers }, response => {
       const chunks = [];
       response.on('data', chunk => chunks.push(chunk));
       response.on('end', () => resolve({ status: response.statusCode, headers: response.headers, body: Buffer.concat(chunks) }));
@@ -113,6 +113,8 @@ test('production endpoints protect secrets and never silently save an undelivera
   });
   const identity = await raw({ 'Accept-Encoding': 'identity' });
   const compressed = await raw({ 'Accept-Encoding': 'gzip' });
+  assert.equal(identity.status, 200);
+  assert.equal(compressed.status, 200);
   assert.equal(compressed.headers['content-encoding'], 'gzip');
   assert.equal(compressed.headers.vary, 'Accept-Encoding');
   assert.equal(compressed.headers['cache-control'], 'no-cache');
@@ -121,7 +123,7 @@ test('production endpoints protect secrets and never silently save an undelivera
   const notModified = await raw({ 'Accept-Encoding': 'gzip', 'If-None-Match': compressed.headers.etag });
   assert.equal(notModified.status, 304);
   assert.equal(notModified.body.length, 0);
-  const head = await fetch(base + '/assets/variants/motion-gsap.js', { method: 'HEAD', headers: { 'Accept-Encoding': 'gzip' } });
+  const head = await fetch(base + '/app.js', { method: 'HEAD', headers: { 'Accept-Encoding': 'gzip' } });
   assert.equal(head.headers.get('content-length'), String(compressed.body.length));
   assert.equal((await head.arrayBuffer()).byteLength, 0);
   assert.equal((await raw({ 'Accept-Encoding': 'gzip;q=0, *;q=1' })).headers['content-encoding'], undefined);

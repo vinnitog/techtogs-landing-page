@@ -18,3 +18,9 @@ metade, identidade equivalente, HEAD vazio, 304 vazio e API sem compressão.
 Build e regressões de formulário completam a etapa. Isso reduz bytes de rede;
 não prova CWV real ou throughput, pois compressão tem custo de CPU. Pages segue
 o cache/compressão de seu provedor. Rollback é revert do commit sem migração.
+
+CI Linux identificou que o teste HTTP dependia do bundle gerado localmente,
+ausente antes de build num checkout limpo. A falha foi reproduzida num git archive
+sem node_modules/artefatos; o teste agora usa app.js versionado, exige status200
+antes de conferir gzip e continua verificando HEAD/304/identity. Não muda runtime
+ou enfraquece os assertions. O gate de navegador continua construir o bundle.
