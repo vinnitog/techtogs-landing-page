@@ -8,6 +8,14 @@ Landing page em HTML/CSS/JavaScript e Node.js. A versão principal combina Motio
 Node.js 24 LTS; execute `npm ci` e depois `npm start`. A landing principal fica em http://localhost:3000.
 Verificações: `npm run check`, `npm test` e `npm run build`.
 
+Regressão de navegador: `npx playwright install chromium` e `npm run test:browser`.
+Com Edge instalado, também é possível usar `BROWSER_CHANNEL=msedge` (PowerShell:
+`$env:BROWSER_CHANNEL='msedge'`). O teste inicia um servidor temporário em loopback,
+bloqueia origens externas e simula a entrega do formulário. O CI executa essas
+verificações em PRs para `main` e pushes de `develop`, sem publicar o site.
+Medição reproduzível dos pacotes: `node scripts/measure-motion.mjs`.
+Evidências e limites: [`docs/qa-motion-2026-10-10.md`](docs/qa-motion-2026-10-10.md).
+
 ### Três versões para comparação
 
 Com `npm start`, abra:
