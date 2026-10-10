@@ -110,6 +110,10 @@ dialog.addEventListener('close', () => { document.body.style.overflow = ''; });
 document.querySelector('#dialog-cta').addEventListener('click', event => {
   form.elements.challenge.value = event.currentTarget.dataset.challenge;
   dialog.close();
+  if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  window.location.hash = event.currentTarget.hash;
+  form.elements.name.focus();
 });
 
 const simulateButton = document.querySelector('#simulate-flow');

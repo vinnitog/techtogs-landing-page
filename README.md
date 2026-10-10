@@ -15,6 +15,7 @@ bloqueia origens externas e simula a entrega do formulário. O CI executa essas
 verificações em PRs para `main` e pushes de `develop`, sem publicar o site.
 Medição reproduzível dos pacotes: `node scripts/measure-motion.mjs`.
 Evidências e limites: [`docs/qa-motion-2026-10-10.md`](docs/qa-motion-2026-10-10.md).
+Regressões de teclado, diálogos e formulário móvel: [`docs/qa-accessibility-2026-10-10.md`](docs/qa-accessibility-2026-10-10.md).
 
 ### Três versões para comparação
 
