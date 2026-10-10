@@ -1,5 +1,6 @@
 const menuToggle = document.querySelector('.menu-toggle');
 const mobileNav = document.querySelector('#mobile-nav');
+import { contactAttempt } from './contact-request.js';
 const form = document.querySelector('#contact-form');
 const dialog = document.querySelector('#project-dialog');
 const isStaticDemo = document.documentElement.dataset.hosting === 'static';
@@ -166,6 +167,7 @@ contactInput.addEventListener('input', () => {
   contactError.textContent = '';
 });
 let isSubmitting = false;
+let pendingContact = null;
 function unconfirmedContactError() {
   const error = new Error('Contact receipt unconfirmed');
   error.code = 'CONTACT_UNCONFIRMED';
@@ -199,10 +201,12 @@ form.addEventListener('submit', async event => {
   status.classList.remove('error');
   status.textContent = '';
   try {
+    const payload = { ...data, consent: data.consent === 'on' };
+    pendingContact = contactAttempt(pendingContact, payload);
     const response = await fetch('/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...data, consent: data.consent === 'on' }),
+      body: JSON.stringify({ ...payload, requestId: pendingContact.requestId, submittedAt: pendingContact.submittedAt }),
       signal: AbortSignal.timeout(15000)
     });
     if (response.status >= 500) throw unconfirmedContactError();
@@ -212,6 +216,7 @@ form.addEventListener('submit', async event => {
       throw unconfirmedContactError();
     }
     status.textContent = result.message;
+    pendingContact = null;
     form.reset();
   } catch (error) {
     status.classList.add('error');

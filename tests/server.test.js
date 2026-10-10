@@ -7,15 +7,18 @@ import { once } from 'node:events';
 test('local input errors stay 400 without provider calls; invalid accepted-provider JSON is 503, not validation', async t => {
   const program = `
     let calls = 0;
+    const attempts = [];
     globalThis.fetch = async (url, options) => {
       if (url !== 'https://api.resend.com/emails' || options.method !== 'POST') throw new Error('External network blocked');
       calls++;
+      attempts.push({ key: options.headers['Idempotency-Key'], body: options.body });
       return calls === 1
         ? new Response('{invalid-fictional-provider-json', {status: 202})
         : new Response(JSON.stringify({id: 'fictional-provider-receipt'}), {status: 200});
     };
     process.on('message', message => {
       if (message === 'fixture-count') process.send({calls});
+      if (message === 'fixture-attempts') process.send({attempts});
     });
     await import(${JSON.stringify(new URL('../server.js', import.meta.url).href)});
   `;
@@ -47,7 +50,8 @@ test('local input errors stay 400 without provider calls; invalid accepted-provi
     signal: AbortSignal.timeout(3000),
   });
   const lead = { name: 'Pessoa QA', contact: 'qa@example.invalid', challenge: 'Sistema interno',
-    message: 'Solicitação inteiramente fictícia.', consent: true };
+    message: 'Solicitação inteiramente fictícia.', consent: true,
+    requestId: '00000000-0000-4000-8000-000000000001', submittedAt: new Date().toISOString() };
   for (const body of ['{invalid-input', 'null', '[]', JSON.stringify({ ...lead, name: 42 }), JSON.stringify({ ...lead, consent: false })]) {
     assert.equal((await send(body)).status, 400);
     assert.equal(await calls(), 0, 'Input failure cannot reach even the fictional provider.');
@@ -62,6 +66,14 @@ test('local input errors stay 400 without provider calls; invalid accepted-provi
   assert.match(receipt.message, /Recebemos sua mensagem/);
   assert.match(receipt.id, /^[a-f0-9-]{36}$/);
   assert.equal(await calls(), 2, 'Valid provider confirmation is one call per manual request.');
+  const attemptsReply = once(child, 'message', { signal: AbortSignal.timeout(3000) });
+  child.send('fixture-attempts');
+  const attempts = (await attemptsReply)[0].attempts;
+  assert.equal(attempts[0].key, 'contact/' + lead.requestId);
+  assert.deepEqual(attempts[0], attempts[1], 'Manual retry keeps both provider key and full email body stable.');
+  assert.equal((await send(JSON.stringify({ ...lead, requestId: 'bad' }))).status, 400);
+  assert.equal((await send(JSON.stringify({ ...lead, submittedAt: new Date(Date.now() - 24 * 3600000).toISOString() }))).status, 409);
+  assert.equal(await calls(), 2, 'Expired/invalid identity never reaches the provider.');
   const closed = once(child, 'close'); child.kill(); await closed;
   assert.equal(errors.trim(), 'Falha no recebimento de contato: SyntaxError', 'Only the error name is logged, without input/provider content.');
 });

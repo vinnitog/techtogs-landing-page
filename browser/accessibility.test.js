@@ -84,6 +84,30 @@ for (const [name, response] of [
   });
 }
 
+test('manual retry keeps identity; payload change starts a new attempt; confirmation clears it', async () => {
+  let calls = 0;
+  const { page, sent, errors } = await fixture(390, route => {
+    calls++;
+    return route.fulfill({ status: calls === 4 ? 201 : 503, json: { message: calls === 4 ? 'Confirmação fictícia.' : 'Falha fictícia.' } });
+  });
+  try {
+    await fillContact(page);
+    const submit = async () => {
+      await page.locator('#contact-form [type=submit]').click();
+      await page.waitForFunction(() => !document.querySelector('#contact-form [type=submit]').hasAttribute('aria-busy'));
+    };
+    await submit(); await submit();
+    assert.deepEqual(sent[0], sent[1]);
+    await page.locator('[name=message]').fill('Uma intenção fictícia diferente.');
+    await submit(); await submit();
+    assert.notEqual(sent[0].requestId, sent[2].requestId);
+    assert.deepEqual(sent[2], sent[3]);
+    await fillContact(page); await submit();
+    assert.notEqual(sent[4].requestId, sent[3].requestId);
+    assert.deepEqual(errors, []);
+  } finally { await page.close(); }
+});
+
 test('definitive contact validation retains its message; valid 201 alone clears the draft', async () => {
   let requests = 0;
   const validation = 'Verifique seu nome, contato, desafio e mensagem, e confirme o consentimento.';
