@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { isIP } from 'node:net';
 import { sendContactEmail } from './contact-email.js';
+import { publicRepresentation } from './static-response.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
@@ -144,8 +145,9 @@ const server = http.createServer(async (request, response) => {
   if (!file) { response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); return response.end('Página não encontrada.'); }
   try {
     const content = await readFile(path.join(ROOT, file[0]));
-    response.writeHead(200, { 'Content-Type': `${file[1]}; charset=utf-8`, 'Cache-Control': 'no-cache' });
-    response.end(request.method === 'HEAD' ? undefined : content);
+    const representation = await publicRepresentation(content, file[1], request.headers);
+    response.writeHead(representation.status, representation.headers);
+    response.end(request.method === 'HEAD' || representation.status !== 200 ? undefined : representation.body);
   } catch {
     response.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
     response.end('Não foi possível carregar esta página.');

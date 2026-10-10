@@ -92,6 +92,28 @@ test('production endpoints protect secrets and never silently save an undelivera
   assert.equal(redirect.headers.location, 'https://techtogs.com.br/politica-de-privacidade?from=footer');
   const config = await (await fetch(`${base}/api/config`)).json();
   assert.equal(config.contactAvailable, false);
+  const raw = headers => new Promise((resolve, reject) => {
+    get(base + '/assets/variants/motion-gsap.js', { headers }, response => {
+      const chunks = [];
+      response.on('data', chunk => chunks.push(chunk));
+      response.on('end', () => resolve({ status: response.statusCode, headers: response.headers, body: Buffer.concat(chunks) }));
+    }).on('error', reject);
+  });
+  const identity = await raw({ 'Accept-Encoding': 'identity' });
+  const compressed = await raw({ 'Accept-Encoding': 'gzip' });
+  assert.equal(compressed.headers['content-encoding'], 'gzip');
+  assert.equal(compressed.headers.vary, 'Accept-Encoding');
+  assert.equal(compressed.headers['cache-control'], 'no-cache');
+  assert.deepEqual((await import('node:zlib')).gunzipSync(compressed.body), identity.body);
+  assert.ok(compressed.body.length < identity.body.length / 2);
+  const notModified = await raw({ 'Accept-Encoding': 'gzip', 'If-None-Match': compressed.headers.etag });
+  assert.equal(notModified.status, 304);
+  assert.equal(notModified.body.length, 0);
+  const head = await fetch(base + '/assets/variants/motion-gsap.js', { method: 'HEAD', headers: { 'Accept-Encoding': 'gzip' } });
+  assert.equal(head.headers.get('content-length'), String(compressed.body.length));
+  assert.equal((await head.arrayBuffer()).byteLength, 0);
+  assert.equal((await raw({ 'Accept-Encoding': 'gzip;q=0, *;q=1' })).headers['content-encoding'], undefined);
+  assert.equal((await fetch(base + '/api/config', { headers: { 'Accept-Encoding': 'gzip' } })).headers.get('content-encoding'), null);
   for (const route of ['/server.js', '/contact-email.js', '/.env', '/data/leads.jsonl']) {
     assert.equal((await fetch(base + route)).status, 404);
   }
