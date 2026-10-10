@@ -2,6 +2,69 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { get } from 'node:http';
+import { once } from 'node:events';
+
+test('local input errors stay 400 without provider calls; invalid accepted-provider JSON is 503, not validation', async t => {
+  const program = `
+    let calls = 0;
+    globalThis.fetch = async (url, options) => {
+      if (url !== 'https://api.resend.com/emails' || options.method !== 'POST') throw new Error('External network blocked');
+      calls++;
+      return calls === 1
+        ? new Response('{invalid-fictional-provider-json', {status: 202})
+        : new Response(JSON.stringify({id: 'fictional-provider-receipt'}), {status: 200});
+    };
+    process.on('message', message => {
+      if (message === 'fixture-count') process.send({calls});
+    });
+    await import(${JSON.stringify(new URL('../server.js', import.meta.url).href)});
+  `;
+  const child = spawn(process.execPath, ['--input-type=module', '-e', program], {
+    env: { ...process.env, PORT: '0', HOST: '127.0.0.1', NODE_ENV: 'production',
+      RESEND_API_KEY: 'fixture-not-a-key', CONTACT_RECIPIENT: 'qa@example.invalid', CONTACT_WEBHOOK_URL: '' },
+    stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
+  });
+  let errors = '';
+  child.stderr.on('data', data => { errors += data.toString(); });
+  t.after(async () => {
+    if (child.exitCode === null && child.signalCode === null) { const closed = once(child, 'close'); child.kill(); await closed; }
+  });
+  const base = await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Fixture startup timeout')), 5000);
+    child.once('error', error => { clearTimeout(timer); reject(error); });
+    child.once('exit', () => { clearTimeout(timer); reject(new Error('Fixture exited')); });
+    child.stdout.on('data', data => {
+      const address = data.toString().match(/http:\/\/127\.0\.0\.1:\d+/)?.[0];
+      if (address) { clearTimeout(timer); resolve(address); }
+    });
+  });
+  const calls = async () => {
+    const reply = once(child, 'message', { signal: AbortSignal.timeout(3000) });
+    child.send('fixture-count'); return (await reply)[0].calls;
+  };
+  const send = body => fetch(base + '/api/contact', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Origin: base }, body,
+    signal: AbortSignal.timeout(3000),
+  });
+  const lead = { name: 'Pessoa QA', contact: 'qa@example.invalid', challenge: 'Sistema interno',
+    message: 'Solicitação inteiramente fictícia.', consent: true };
+  for (const body of ['{invalid-input', 'null', '[]', JSON.stringify({ ...lead, name: 42 }), JSON.stringify({ ...lead, consent: false })]) {
+    assert.equal((await send(body)).status, 400);
+    assert.equal(await calls(), 0, 'Input failure cannot reach even the fictional provider.');
+  }
+  const failed = await send(JSON.stringify(lead));
+  assert.equal(failed.status, 503);
+  assert.equal((await failed.json()).message, 'Não foi possível confirmar o recebimento da sua mensagem. Confira com a equipe pelos contatos da página antes de reenviar.');
+  assert.equal(await calls(), 1, 'Accepted-provider parse failure is not retried.');
+  const accepted = await send(JSON.stringify(lead));
+  assert.equal(accepted.status, 201);
+  const receipt = await accepted.json();
+  assert.match(receipt.message, /Recebemos sua mensagem/);
+  assert.match(receipt.id, /^[a-f0-9-]{36}$/);
+  assert.equal(await calls(), 2, 'Valid provider confirmation is one call per manual request.');
+  const closed = once(child, 'close'); child.kill(); await closed;
+  assert.equal(errors.trim(), 'Falha no recebimento de contato: SyntaxError', 'Only the error name is logged, without input/provider content.');
+});
 
 test('production endpoints protect secrets and never silently save an undeliverable contact', async (t) => {
   const child = spawn(process.execPath, ['server.js'], {

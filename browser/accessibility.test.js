@@ -52,6 +52,59 @@ async function fillContact(page, contact = 'qa@example.invalid') {
   await page.locator('[name=consent]').check();
 }
 
+for (const [name, response] of [
+  ['network failure', route => route.abort('failed')],
+  ['invalid JSON', route => route.fulfill({ status: 200, contentType: 'application/json', body: '{invalid' })],
+  ['200 without confirmation', route => route.fulfill({ json: {} })],
+  ['201 with blank confirmation', route => route.fulfill({ status: 201, json: { message: '   ', id: 'fixture-receipt' } })],
+  ['503 provider response', route => route.fulfill({ status: 503, json: { message: 'Não foi possível confirmar o recebimento da sua mensagem. Confira com a equipe pelos contatos da página antes de reenviar.' } })],
+  ['503 legacy provider response', route => route.fulfill({ status: 503, json: { message: 'Não foi possível enviar sua mensagem. Tente novamente em alguns instantes.' } })],
+  ['502 gateway response', route => route.fulfill({ status: 502, contentType: 'text/html', body: '<h1>Fictional gateway failure</h1>' })],
+  ['native 15s deadline', () => {}],
+]) {
+  test('uncertain contact ' + name + ' preserves draft and advises checking receipt, without automatic retry', async () => {
+    const { page, errors, sent } = await fixture(390, response);
+    try {
+      page.setDefaultTimeout(22000);
+      await fillContact(page);
+      await page.locator('#contact-form [type=submit]').click();
+      await page.waitForFunction(() => !document.querySelector('#contact-form [type=submit]').hasAttribute('aria-busy'));
+      const status = await page.locator('#contact-form .form-status').textContent();
+      assert.match(status, /confirmar o recebimento/);
+      assert.match(status, /antes de reenviar/);
+      assert.doesNotMatch(status, /tente novamente/i);
+      assert.equal(await page.locator('[name=name]').inputValue(), 'Pessoa QA');
+      assert.equal(await page.locator('[name=contact]').inputValue(), 'qa@example.invalid');
+      assert.equal(await page.locator('[name=message]').inputValue(), 'Solicitação inteiramente fictícia para QA.');
+      assert.equal(await page.locator('[name=consent]').isChecked(), true);
+      assert.equal(await page.locator('#contact-form [type=submit]').getAttribute('aria-busy'), null);
+      assert.equal(sent.length, 1);
+      assert.deepEqual(errors, []);
+    } finally { await page.close(); }
+  });
+}
+
+test('definitive contact validation retains its message; valid 201 alone clears the draft', async () => {
+  let requests = 0;
+  const validation = 'Verifique seu nome, contato, desafio e mensagem, e confirme o consentimento.';
+  const { page, errors, sent } = await fixture(390, route => ++requests === 1
+    ? route.fulfill({ status: 400, json: { message: validation } })
+    : route.fulfill({ status: 201, json: { message: 'Solicitação fictícia recebida QA.', id: 'fixture-receipt' } }));
+  try {
+    await fillContact(page);
+    await page.locator('#contact-form [type=submit]').click();
+    await page.getByRole('status').filter({ hasText: validation }).waitFor();
+    assert.equal(await page.locator('[name=name]').inputValue(), 'Pessoa QA');
+    assert.equal(sent.length, 1);
+    await page.locator('#contact-form [type=submit]').click();
+    await page.getByRole('status').filter({ hasText: 'Solicitação fictícia recebida QA.' }).waitFor();
+    assert.equal(sent.length, 2);
+    assert.equal(await page.locator('[name=name]').inputValue(), '');
+    assert.equal(await page.locator('[name=consent]').isChecked(), false);
+    assert.deepEqual(errors, []);
+  } finally { await page.close(); }
+});
+
 async function assertFocus(page, selector) {
   assert.ok(await page.locator(selector).evaluate(element => element === document.activeElement), 'Expected focus at ' + selector);
 }
@@ -172,7 +225,7 @@ test('mobile pending request blocks concurrent submits, preserves fields on erro
     await submit.click({ force: true });
     await page.evaluate(() => { const form = document.querySelector('#contact-form'); form.requestSubmit(); form.requestSubmit(); });
     releaseResponse();
-    await page.getByRole('status').filter({ hasText: 'Serviço fictício indisponível QA.' }).waitFor();
+    await page.getByRole('status').filter({ hasText: 'Confirme com a equipe pelos contatos ao lado antes de reenviar.' }).waitFor();
     assert.equal(sent.length, 1);
     assert.equal(await page.locator('[name=name]').inputValue(), 'Pessoa QA');
     assert.equal(await page.locator('[name=message]').inputValue(), 'Solicitação inteiramente fictícia para QA.');
