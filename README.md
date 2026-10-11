@@ -16,6 +16,7 @@ verificações em PRs para `main` e pushes de `develop`, sem publicar o site.
 Medição reproduzível dos pacotes: `node scripts/measure-motion.mjs`.
 Evidências e limites: [`docs/qa-motion-2026-10-10.md`](docs/qa-motion-2026-10-10.md).
 Regressões de teclado, diálogos e formulário móvel: [`docs/qa-accessibility-2026-10-10.md`](docs/qa-accessibility-2026-10-10.md).
+Verificação da publicação/cache e preservação do rascunho em entrega incerta: [`docs/qa-publication-contact-2026-10-10.md`](docs/qa-publication-contact-2026-10-10.md).
 
 ### Três versões para comparação
 
@@ -48,7 +49,12 @@ Configure somente no ambiente privado do Railway:
 
 Em produção, o formulário só confirma sucesso após aceitação pelo provedor. Sem integração, retorna indisponibilidade; não grava contatos no disco efêmero. Em desenvolvimento sem integração, salva a prévia em `data/leads.jsonl`, ignorada pelo Git.
 
-O remetente e o destinatário são controlados pelo servidor. O e-mail informado pelo visitante é usado apenas como Reply-To. A proteção contra repetição fica em memória e é adequada a uma única instância; reavaliar para múltiplas réplicas. Atrás do Railway, usa o último endereço válido de X-Forwarded-For informado pelo proxy.
+Erros de entrada continuam retornando 400. Falhas de entrega ou de interpretação da resposta do provedor retornam 503 e pedem confirmar o recebimento com a equipe antes de reenviar. O cliente preserva o rascunho nesses casos e em falhas de rede, timeout ou confirmação ausente; não há retry automático. A confirmação do provedor não comprova leitura pelo destinatário. As evidências e os limites estão em [QA de publicação e contato](docs/qa-publication-contact-2026-10-10.md).
+
+O remetente e o destinatário são controlados pelo servidor. O e-mail informado pelo visitante é usado apenas como Reply-To. A limitação de frequência fica em memória por instância; reavaliar para múltiplas réplicas. Tentativas manuais idênticas mantêm a chave e o corpo para deduplicação no Resend, conforme [identidade de contato e limites](docs/qa-contact-idempotency-2026-10-10.md). Atrás do Railway, usa o último endereço válido de X-Forwarded-For informado pelo proxy.
+
+Arquivos públicos do servidor negociam gzip e ETag mantendo no-cache;
+API e contato continuam no-store. Veja [transferência pública](docs/qa-public-transfer-2026-10-10.md).
 
 Não publique chaves em HTML, JavaScript do navegador, commits ou arquivos estáticos. As rotas públicas do servidor usam uma lista explícita de arquivos.
 

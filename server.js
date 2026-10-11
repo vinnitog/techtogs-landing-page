@@ -5,6 +5,8 @@ import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { isIP } from 'node:net';
 import { sendContactEmail } from './contact-email.js';
+import { publicRepresentation } from './static-response.js';
+import { validateContactAttempt } from './contact-request.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
@@ -34,6 +36,7 @@ const STATIC_FILES = new Map([
   ['/politica-de-privacidade.html', ['politica-de-privacidade.html', 'text/html']],
   ['/styles.css', ['styles.css', 'text/css']],
   ['/app.js', ['app.js', 'text/javascript']],
+  ['/contact-request.js', ['contact-request.js', 'text/javascript']],
   ['/assets/symbol.svg', ['assets/symbol.svg', 'image/svg+xml']],
   ['/assets/logo.svg', ['assets/logo.svg', 'image/svg+xml']],
   ['/assets/logo-mono.svg', ['assets/logo-mono.svg', 'image/svg+xml']],
@@ -72,6 +75,7 @@ async function receiveContact(request, response) {
   }
   const chunks = [];
   let size = 0;
+  let inputValidated = false;
   try {
     for await (const chunk of request) {
       size += chunk.length;
@@ -89,7 +93,9 @@ async function receiveContact(request, response) {
     if (data.name.length < 2 || data.name.length > 120 || data.company.length > 160 || !validContact || data.contact.length > 180 || !CHALLENGES.has(data.challenge) || data.message.length < 10 || data.message.length > 5000 || input.consent !== true) {
       return sendJson(response, 400, { message: 'Verifique seu nome, contato, desafio e mensagem, e confirme o consentimento.' });
     }
-    const lead = { id: randomUUID(), createdAt: new Date().toISOString(), ...data, consent: true, privacyVersion: '2026-09-26' };
+    const identity = validateContactAttempt(input) || { id: randomUUID(), createdAt: new Date().toISOString() };
+    inputValidated = true;
+    const lead = { ...identity, ...data, consent: true, privacyVersion: '2026-09-26' };
     if (rate && Date.now() - rate.start < RATE_WINDOW) rate.count++;
     else submissions.set(client, { start: Date.now(), count: 1 });
     if (EMAIL_READY) {
@@ -115,9 +121,10 @@ async function receiveContact(request, response) {
       id: lead.id
     });
   } catch (error) {
-    if (error instanceof SyntaxError || error.message === 'invalid') return sendJson(response, 400, { message: 'Dados inválidos. Verifique os campos e tente novamente.' });
+    if (!inputValidated && [400, 409].includes(error.status)) return sendJson(response, error.status, { message: error.message });
+    if (!inputValidated && (error instanceof SyntaxError || error.message === 'invalid')) return sendJson(response, 400, { message: 'Dados inválidos. Verifique os campos e tente novamente.' });
     console.error('Falha no recebimento de contato:', error.name);
-    return sendJson(response, 503, { message: 'Não foi possível enviar sua mensagem. Tente novamente em alguns instantes.' });
+    return sendJson(response, 503, { message: 'Não foi possível confirmar o recebimento da sua mensagem. Confira com a equipe pelos contatos da página antes de reenviar.' });
   }
 }
 
@@ -142,8 +149,9 @@ const server = http.createServer(async (request, response) => {
   if (!file) { response.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); return response.end('Página não encontrada.'); }
   try {
     const content = await readFile(path.join(ROOT, file[0]));
-    response.writeHead(200, { 'Content-Type': `${file[1]}; charset=utf-8`, 'Cache-Control': 'no-cache' });
-    response.end(request.method === 'HEAD' ? undefined : content);
+    const representation = await publicRepresentation(content, file[1], request.headers);
+    response.writeHead(representation.status, representation.headers);
+    response.end(request.method === 'HEAD' || representation.status !== 200 ? undefined : representation.body);
   } catch {
     response.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
     response.end('Não foi possível carregar esta página.');

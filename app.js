@@ -1,5 +1,6 @@
 const menuToggle = document.querySelector('.menu-toggle');
 const mobileNav = document.querySelector('#mobile-nav');
+import { contactAttempt } from './contact-request.js';
 const form = document.querySelector('#contact-form');
 const dialog = document.querySelector('#project-dialog');
 const isStaticDemo = document.documentElement.dataset.hosting === 'static';
@@ -166,6 +167,12 @@ contactInput.addEventListener('input', () => {
   contactError.textContent = '';
 });
 let isSubmitting = false;
+let pendingContact = null;
+function unconfirmedContactError() {
+  const error = new Error('Contact receipt unconfirmed');
+  error.code = 'CONTACT_UNCONFIRMED';
+  return error;
+}
 form.addEventListener('submit', async event => {
   event.preventDefault();
   if (isSubmitting) return;
@@ -194,22 +201,29 @@ form.addEventListener('submit', async event => {
   status.classList.remove('error');
   status.textContent = '';
   try {
+    const payload = { ...data, consent: data.consent === 'on' };
+    pendingContact = contactAttempt(pendingContact, payload);
     const response = await fetch('/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...data, consent: data.consent === 'on' }),
+      body: JSON.stringify({ ...payload, requestId: pendingContact.requestId, submittedAt: pendingContact.submittedAt }),
       signal: AbortSignal.timeout(15000)
     });
+    if (response.status >= 500) throw unconfirmedContactError();
     const result = await response.json();
     if (!response.ok) throw new Error(result.message || 'Não foi possível enviar sua mensagem. Tente novamente.');
+    if (typeof result?.message !== 'string' || !result.message.trim()) {
+      throw unconfirmedContactError();
+    }
     status.textContent = result.message;
+    pendingContact = null;
     form.reset();
   } catch (error) {
     status.classList.add('error');
     status.textContent = error.name === 'TimeoutError'
-      ? 'O envio demorou mais que o esperado. Verifique sua conexão e tente novamente.'
-      : error instanceof TypeError || error instanceof SyntaxError
-        ? 'Não foi possível conectar ao formulário. Tente novamente em alguns instantes.'
+      ? 'O envio demorou mais que o esperado e não foi possível confirmar o recebimento. Seus dados foram mantidos. Confirme com a equipe pelos contatos ao lado antes de reenviar.'
+      : error.code === 'CONTACT_UNCONFIRMED' || error instanceof TypeError || error instanceof SyntaxError
+        ? 'Não foi possível confirmar o recebimento. Seus dados foram mantidos. Confirme com a equipe pelos contatos ao lado antes de reenviar.'
         : error.message;
   } finally {
     submitButton.innerHTML = originalMarkup;
